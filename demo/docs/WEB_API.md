@@ -85,23 +85,11 @@ selection = apply_strategy_web_input("custom")
 ## HTTP 服务
 
 ```powershell
-& .\.venv\Scripts\python.exe demo\web_server.py
+& .\.venv\Scripts\python.exe demo\api_server.py
 ```
 
-默认地址为 `http://127.0.0.1:8770`。同一服务同时托管
-`Simulation2/visualization/web` Vue 3 控制台页面，直接访问首页即可使用事件、
-公告、策略输入和会话控制。Vue 运行库已本地化，不依赖外部 CDN。
-
-第二版页面使用独立入口和静态目录，不覆盖第一版：
-
-```powershell
-& .\.venv\Scripts\python.exe demo\web_server2.py --port 8771
-```
-
-地址为 `http://127.0.0.1:8771`，托管
-`Simulation2/visualization/web2`。V2 使用左中右三部分单屏布局：左侧显示
-Agent 网络、舆情指标和评论分布图表，中间输入事件与公告策略，右侧设置官方
-发布时机和追加公告。
+默认地址为 `http://127.0.0.1:8770`。本仓库的服务只提供后端 JSON API；
+V1/V2 前端源码已迁移到独立 `Simulation2-frontend` 项目。
 
 以下为创建会话的 JSON 请求体：
 

@@ -54,7 +54,7 @@ demo/experiments/<experiment_id>/web_control.json
 - 追加公告
 - 查询状态和实时快照
 
-HTTP 路由由 `demo/web_server.py` 提供，函数门面为 `demo/web_api.py`。
+HTTP 路由由 `demo/api_server.py` 提供，函数门面为 `demo/web_api.py`。
 
 ## 4. 固定轮次与公告时间线
 
@@ -131,17 +131,11 @@ comment_orientation
 - 外圈颜色表示官方态度；
 - 点击小球查看单 Agent 详情。
 
-## 7. 双版本前端控制台
+## 7. 双版本前端控制台（已分离）
 
-V1 页面目录：
-
-```text
-visualization/web/
-```
-
-V1 已重构为 Vue 3 单页应用，Vue 运行库保存在
-`visualization/web/vue.global.prod.js`，无需 Node/Vite 构建即可由
-`demo/web_server.py` 直接托管。
+V1/V2 的 Vue 源码、样式、前端依赖和构建配置已经迁移到独立的
+`Simulation2-frontend` 项目。本仓库不再保存 `visualization/web` 或
+`visualization/web2` 前端代码，只保留后端 API。
 
 V1 主要布局：
 
@@ -160,14 +154,7 @@ V1 主要布局：
 - 多条追加公告轮次标记；
 - 数据点悬浮数值。
 
-V2 是独立于 V1 的单屏控制台：
-
-```text
-demo/web_server2.py
-visualization/web2/
-```
-
-V2 使用独立端口和静态目录，不覆盖 V1。主要布局为：
+V2 是独立于 V1 的单屏控制台，主要布局为：
 
 - 左侧：会话状态、Agent 全连接网络、舆情指标和评论分布图表；
 - 中间：事件输入和公告策略；
@@ -200,30 +187,24 @@ V2 交互包括：
 
 ## 9. 运行方式
 
-启动 V1 Web API 和控制台：
+启动后端 API：
 
 ```powershell
 cd D:\Simulation2
-& .\.venv\Scripts\python.exe demo\web_server.py --port 8770
+& .\.venv\Scripts\python.exe demo\api_server.py --port 8770
+```
+
+启动独立前端项目：
+
+```powershell
+cd D:\Simulation2-frontend
+pnpm run dev
 ```
 
 浏览器访问：
 
 ```text
-http://127.0.0.1:8770
-```
-
-启动 V2 单屏控制台：
-
-```powershell
-cd D:\Simulation2
-& .\.venv\Scripts\python.exe demo\web_server2.py --port 8771
-```
-
-浏览器访问：
-
-```text
-http://127.0.0.1:8771
+http://127.0.0.1:5173
 ```
 
 ## 10. 已验证内容

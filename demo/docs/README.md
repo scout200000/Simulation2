@@ -180,25 +180,22 @@ python visualization\social_network_report\app.py
 
 浏览器默认打开 `http://127.0.0.1:8766`。该命令不会重新运行仿真，也不会调用 DeepSeek 或修改实验结果。
 
-## 启动仿真控制台
+## 启动仿真控制台后端
 
-V1 控制台使用端口 `8770`：
-
-```powershell
-& .\.venv\Scripts\python.exe demo\web_server.py --port 8770
-```
-
-访问 `http://127.0.0.1:8770`，使用 `visualization/web` 页面。
-
-V2 是独立的单屏控制台，默认使用端口 `8771`：
+本仓库只保留后端 API。启动接口服务：
 
 ```powershell
-& .\.venv\Scripts\python.exe demo\web_server2.py --port 8771
+& .\.venv\Scripts\python.exe demo\api_server.py --port 8770
 ```
 
-访问 `http://127.0.0.1:8771`，使用 `visualization/web2` 页面。V2 的左侧展示
-Agent 网络、舆情指标和评论分布图表，中间为事件与公告策略输入，右侧为官方
-发布时机和追加公告。两套服务可同时运行。
+V1/V2 前端源码已经迁移到独立的 `Simulation2-frontend` 项目。启动前端：
+
+```powershell
+cd D:\Simulation2-frontend
+pnpm run dev
+```
+
+浏览器访问 `http://127.0.0.1:5173`，前端通过 `/api` 代理连接 `8770`。
 
 完整接口和会话控制语义见 [`WEB_API.md`](./WEB_API.md)。
 

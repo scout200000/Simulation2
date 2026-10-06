@@ -38,15 +38,14 @@
 | `infrastructure/json_storage.py` | JSON与JSONL读写 |
 | `web_api.py` | 统一 Web 输入、会话控制和状态查询门面 |
 | `web_control.py` | 单策略逐轮状态机、公告时间线、检查点和回滚 |
-| `web_server.py` | V1 本地 HTTP 服务，托管 `visualization/web` |
-| `web_server2.py` | V2 独立 HTTP 服务，托管 `visualization/web2` |
+| `api_server.py` | 后端 API 本地 HTTP 服务，默认端口 `8770`，不包含前端源码 |
 
 ## Web 控制层
 
 ```text
-V1 / V2 Vue 页面
-        ↓ HTTP JSON
-web_server.py / web_server2.py
+外部 V1 / V2 Vue 项目
+        ↓ HTTP JSON /api
+api_server.py
         ↓
 web_api.py
         ↓
@@ -55,8 +54,8 @@ web_control.py
 单轮仿真 runner 与实验状态目录
 ```
 
-- V1 使用 `visualization/web`，默认端口 `8770`。
-- V2 使用 `visualization/web2`，默认端口 `8771`，采用左侧状态、中间输入、右侧时机的单屏布局。
+- V1/V2 源码已迁移到独立的 `Simulation2-frontend` 项目。
+- 后端只提供 `/api`，默认端口 `8770`。
 - 两版共用 `web_api.py` 和 `web_control.py`，不复制仿真计算逻辑。
 - 不回应策略跳过进场前基线，直接从第 1 轮运行控制场景。
 

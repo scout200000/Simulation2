@@ -75,27 +75,23 @@ demo/experiments/<event_id>_<timestamp>/
 
 ## Web 输入与会话 API
 
-V1 本地启动：
+本仓库只启动后端 API：
 
 ```powershell
-& .\.venv\Scripts\python.exe demo\web_server.py
+& .\.venv\Scripts\python.exe demo\api_server.py
 ```
 
 默认服务地址为 `http://127.0.0.1:8770`。事件、公告内容、策略选择和
 暂停/继续/回滚/重启接口说明见 [`WEB_API.md`](./WEB_API.md)。
 
-同一服务会托管 `visualization/web` 下的控制台页面，浏览器访问
-`http://127.0.0.1:8770` 即可使用事件、公告与策略输入并控制会话。
-
-V2 单屏控制台使用独立入口和静态目录：
+V1/V2 前端源码已迁移到独立项目，启动方式：
 
 ```powershell
-& .\.venv\Scripts\python.exe demo\web_server2.py --port 8771
+cd D:\Simulation2-frontend
+pnpm run dev
 ```
 
-浏览器访问 `http://127.0.0.1:8771`。V2 托管 `visualization/web2`，左侧显示
-Agent 网络、舆情指标和评论分布图表，中间输入事件与公告，右侧设置官方发布
-时机和追加公告。V1 和 V2 可以同时启动，互不覆盖。
+浏览器访问 `http://127.0.0.1:5173`。Vite 会把 `/api` 请求代理到后端。
 
 会话控制补充规则：
 

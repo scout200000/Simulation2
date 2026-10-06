@@ -1,19 +1,16 @@
-"""Second-generation stdlib HTTP adapter for the Simulation2 web API.
+"""Minimal stdlib HTTP server for the Simulation2 backend API.
 
-Run with ``python demo/web_server2.py``. The adapter only serializes calls to
-``web_api``; it does not implement simulation logic.
+Run with ``python demo/api_server.py``. The server only exposes the JSON API;
+it does not serve frontend static files or implement simulation logic.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import mimetypes
 import re
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
-from urllib.parse import unquote
 from urllib.parse import urlparse
 
 import web_api
@@ -23,7 +20,6 @@ SESSION_ACTION_RE = re.compile(
     r"^/api/sessions/([0-9A-Za-z_\-]+)/(start|step|continue|pause|resume|rollback|restart|run|announcement)$"
 )
 SESSION_GET_RE = re.compile(r"^/api/sessions/([0-9A-Za-z_\-]+)$")
-WEB_ROOT = Path(__file__).resolve().parent.parent / "visualization" / "web2"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -42,26 +38,6 @@ class Handler(BaseHTTPRequestHandler):
         if not length:
             return {}
         return json.loads(self.rfile.read(length).decode("utf-8") or "{}")
-
-    def _serve_static(self, path):
-        relative = unquote(path).lstrip("/") or "index.html"
-        requested = (WEB_ROOT / relative).resolve()
-        if WEB_ROOT.resolve() not in requested.parents and requested != WEB_ROOT.resolve():
-            self.send_error(HTTPStatus.FORBIDDEN)
-            return
-        if not requested.is_file():
-            self.send_error(HTTPStatus.NOT_FOUND)
-            return
-        content = requested.read_bytes()
-        content_type, _ = mimetypes.guess_type(requested.name)
-        self.send_response(HTTPStatus.OK)
-        self.send_header(
-            "Content-Type",
-            f"{content_type or 'application/octet-stream'}; charset=utf-8",
-        )
-        self.send_header("Content-Length", str(len(content)))
-        self.end_headers()
-        self.wfile.write(content)
 
     def _run(self, action):
         try:
@@ -177,9 +153,6 @@ class Handler(BaseHTTPRequestHandler):
         if match:
             self._session(match.group(1), "status")
             return
-        if not path.startswith("/api/"):
-            self._serve_static(path)
-            return
         self._send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
     def do_POST(self):  # noqa: N802
@@ -197,21 +170,21 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
     def log_message(self, format_string, *args):
-        print(f"[web server 2] {format_string % args}")
+        print(f"[api server] {format_string % args}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Simulation2 web API server 2")
+    parser = argparse.ArgumentParser(description="Simulation2 backend API server")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8771)
+    parser.add_argument("--port", type=int, default=8770)
     args = parser.parse_args()
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"Simulation2 web API 2: http://{args.host}:{args.port}")
+    print(f"Simulation2 backend API: http://{args.host}:{args.port}")
     print("Press Ctrl+C to stop.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nWeb API server stopped.")
+        print("\nBackend API server stopped.")
     finally:
         server.server_close()
 
