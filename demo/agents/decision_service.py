@@ -69,10 +69,9 @@ def decide_one_agent(
     event_context,
     policy,
     visible_comments,
-    global_comments,
     state_store,
 ):
-    """先形成Agent认知，再从当前全局候选评论中选择最终表达。"""
+    """先形成Agent认知，再从个人可见评论中选择最终表达。"""
     event_id = event_context["event_id"]
     step = event_context["current_state"]["step"]
     agent_id = persona["agent_id"]
@@ -106,8 +105,9 @@ def decide_one_agent(
         }
         # 2026/08/25 第五次联调问题修复，修改功能：让最终评论优先匹配本轮官方态度。
         # 2026/08/25 第六次联调问题修复，修改功能：从评分最高的三条评论中进行可复现选择。
+        # 2026/9/5，社交网络传播，修改功能：最终表达严格限制在本轮个人可见评论中。
         selected_comment, scored_candidates = select_best_candidate(
-            global_comments,
+            visible_comments,
             event_context,
             persona,
             cognition_decision["current_emotion"],
@@ -128,11 +128,18 @@ def decide_one_agent(
             cognition_decision["decision_reason"] = reason
             no_fresh_candidate = True
 
+    if selected_comment is not None and selected_comment.get(
+        "comment_id"
+    ) not in {
+        comment.get("comment_id") for comment in visible_comments
+    }:
+        raise ValueError("Agent最终表达不在个人可见评论范围内。")
+
     decision = build_final_decision(
         cognition_decision,
         selected_comment,
         scored_candidates,
-        len(global_comments),
+        len(visible_comments),
     )
     if no_fresh_candidate:
         decision["selection_source"] = "no_fresh_candidate"
@@ -158,7 +165,6 @@ def run_single_agent(persona=None):
         persona,
         event_context,
         policy,
-        comments,
         comments,
         state_store,
     )

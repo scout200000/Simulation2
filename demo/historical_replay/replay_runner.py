@@ -6,6 +6,7 @@ from runtime_paths import DEMO_DIR  # noqa: F401
 
 from simulation.event_state_updater import append_event_state_record
 from experiment_runner import (
+    calculate_scenario_propagation_summary,
     load_round_result,
     prepare_scenario_state,
     run_simulation_step,
@@ -95,6 +96,11 @@ def run_historical_replay(
         "rounds": rounds,
         "final_metrics": rounds[-1]["policy_metrics"],
         "comment_quality": summarize_comment_quality(quality_records),
+        # 2026/9/5，社交网络传播第二阶段A，新增功能：历史复现结果同步输出累计传播指标。
+        "propagation_summary": calculate_scenario_propagation_summary(
+            state_dir,
+            event_id,
+        ),
         "state_dir": str(state_dir),
     }
     save_json(scenario_dir / "historical_replay_result.json", result)

@@ -51,6 +51,19 @@
           "rate": 0.2
         }
       }
+    },
+    "propagation_metrics": {
+      "exposure_count": 48,
+      "reached_agent_count": 26,
+      "reach_rate": 0.866667,
+      "source_agent_count": 18,
+      "propagated_comment_count": 15,
+      "continued_propagation_count": 9,
+      "continued_agent_count": 9,
+      "continuation_rate": 0.1875,
+      "max_propagation_depth": 2,
+      "average_propagation_depth": 1.25,
+      "total_effective_weight": 63.42
     }
   },
   "effect_metrics": {
@@ -77,5 +90,18 @@
       "peak_negative_rate_reduction": 0.1,
       "negative_area_reduction": 0.8
     }
+  },
+  "propagation_summary": {
+    "exposure_count": 356,
+    "reached_agent_count": 30,
+    "reach_rate": 1.0,
+    "source_agent_count": 25,
+    "propagated_comment_count": 52,
+    "continued_propagation_count": 71,
+    "continued_agent_count": 24,
+    "continuation_rate": 0.199438,
+    "max_propagation_depth": 4,
+    "average_propagation_depth": 1.764045,
+    "total_effective_weight": 381.72
   }
 }

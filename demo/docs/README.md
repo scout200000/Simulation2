@@ -52,13 +52,13 @@ conda activate persona_sim
 
 ### 1. 配置 DeepSeek
 
-当前代码从 `demo/project_config.py` 的 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL` 和 `DEEPSEEK_ENDPOINT` 读取模型配置。首次运行前，需要在本地填写可用的 API Key：
+当前代码从环境变量读取 DeepSeek API Key。首次运行前，在当前 PowerShell 窗口执行：
 
-```python
-DEEPSEEK_API_KEY = "填写本机使用的API Key"
+```powershell
+$env:DEEPSEEK_API_KEY = "填写本机使用的API Key"
 ```
 
-API Key 只应保存在本机，不得写入文档、日志或提交到代码仓库。当前实现尚未直接读取系统环境变量，因此仅设置 Windows 环境变量并不能替代上述配置。
+模型和接口地址默认分别为 `deepseek-v4-flash` 和 `https://api.deepseek.com/chat/completions`。如需调整，也可设置 `DEEPSEEK_MODEL` 和 `DEEPSEEK_ENDPOINT`。API Key 只应保存在本机环境变量中，不得写入文档、日志或提交到代码仓库。
 
 ### 2. 检查 Persona
 
@@ -77,6 +77,7 @@ API Key 只应保存在本机，不得写入文档、日志或提交到代码仓
 - `demo/official_response_options.json`：四种内置回应内容、可留空的
   `custom`策略以及不回应对照场景；
 - `demo/config/comment_profiles.json`：评论生成使用的人物类型模板。
+- `demo/config/social_network_config.json`：固定网络、邻居传播数量、公共评论补充和逐层衰减配置。
 
 `event_example.json` 与 `official_response_options.json` 的 `event_id` 必须完全一致。官方回应文件中的 `official_statement_status` 应与声明信息完整程度一致。
 
@@ -101,7 +102,7 @@ API Key 只应保存在本机，不得写入文档、日志或提交到代码仓
 
 ## 运行五策略实验
 
-策略对照实验会生成共享的进场前基线，依据负面阈值、全局恶化或连续停滞判断官方进场时机，然后从相同状态分流并比较不回应、事实通报、共情安抚、辟谣澄清和处置进展；`custom`默认不自动触发，后续可视化控制页可通过单策略触发函数显式运行。
+策略对照实验会生成固定社交网络和共享的进场前基线，依据负面阈值、全局恶化或连续停滞判断官方进场时机，然后从相同网络与状态分流并比较不回应、事实通报、共情安抚、辟谣澄清和处置进展；`custom` 默认不自动触发，可通过单策略入口显式运行。
 
 在项目根目录执行：
 
@@ -116,7 +117,7 @@ python demo\main.py
 demo/experiments/<event_id>_<timestamp>/
 ```
 
-总体结果保存在该批次的 `experiment_result.json`，各场景的逐轮状态、评论、指标和性能数据保存在对应策略子目录中。
+总体结果保存在该批次的 `experiment_result.json`，各场景的逐轮状态、评论、传播事件、指标和性能数据保存在对应策略子目录中。关系传播明细位于`state/propagation_history.jsonl`，逐轮和场景累计传播指标分别位于`rounds[].propagation_metrics`和`propagation_summary`。
 
 ## 运行历史趋势复现
 
@@ -135,6 +136,7 @@ python demo\historical_replay\main.py
 historical_replay_result.json
 historical_replay/state/metrics_history.jsonl
 historical_replay/state/incremental_comment_history.jsonl
+historical_replay/state/propagation_history.jsonl
 ```
 
 ## 启动可视化
@@ -168,22 +170,35 @@ python visualization\app.py --no-browser
 
 服务启动后，在网页中选择已经完成的历史复现实验进行展示。按 `Ctrl+C` 停止服务。
 
-## 启动仿真控制台后端
+### 查看第二十六次联调社交网络传播专题
 
-本仓库只保留后端 API。启动接口服务：
-
-```powershell
-& .\.venv\Scripts\python.exe demo\api_server.py --port 8770
-```
-
-V1/V2 前端源码已经迁移到独立的 `Simulation2-frontend` 项目。启动前端：
+该专题页面固定只读第二十六次联调结果，展示固定关注网络、逐轮信息流、Agent影响力、单条评论传播链和五策略传播指标：
 
 ```powershell
-cd D:\Simulation2-frontend
-pnpm run dev
+python visualization\social_network_report\app.py
 ```
 
-浏览器访问 `http://127.0.0.1:5173`，前端通过 `/api` 代理连接 `8770`。
+浏览器默认打开 `http://127.0.0.1:8766`。该命令不会重新运行仿真，也不会调用 DeepSeek 或修改实验结果。
+
+## 启动仿真控制台
+
+V1 控制台使用端口 `8770`：
+
+```powershell
+& .\.venv\Scripts\python.exe demo\web_server.py --port 8770
+```
+
+访问 `http://127.0.0.1:8770`，使用 `visualization/web` 页面。
+
+V2 是独立的单屏控制台，默认使用端口 `8771`：
+
+```powershell
+& .\.venv\Scripts\python.exe demo\web_server2.py --port 8771
+```
+
+访问 `http://127.0.0.1:8771`，使用 `visualization/web2` 页面。V2 的左侧展示
+Agent 网络、舆情指标和评论分布图表，中间为事件与公告策略输入，右侧为官方
+发布时机和追加公告。两套服务可同时运行。
 
 完整接口和会话控制语义见 [`WEB_API.md`](./WEB_API.md)。
 

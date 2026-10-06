@@ -31,7 +31,7 @@ historical_replay_result.json
 historical_replay/state/
 ```
 
-`historical_replay_result.json` 按轮保存模拟指标、现实时间段、官方信息首次投入轮次和评论数据质量，可与人工整理的真实舆情阶段记录进行对照。
+`historical_replay_result.json` 按轮保存模拟指标、传播指标、现实时间段、官方信息首次投入轮次和评论数据质量；`historical_replay/state/propagation_history.jsonl`保存邻居传播明细。两类数据均可与人工整理的真实舆情阶段记录进行对照。
 
 ## 隔离边界
 

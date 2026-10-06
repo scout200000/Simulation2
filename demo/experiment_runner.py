@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 
 from simulation.event_state_updater import append_event_state_record
+from agents.persona_repository import load_personas
 from infrastructure.json_storage import load_json, read_jsonl, save_json
 from infrastructure.llm_service import merge_llm_performance_stats
 from evaluation.metrics import (
@@ -22,7 +23,16 @@ from evaluation.metrics import (
     calculate_negative_peak_and_area,
     calculate_rebound_rate,
 )
-from project_config import DEMO_DIR, OFFICIAL_RESPONSE_FILE
+from evaluation.propagation_metrics import (
+    calculate_propagation_metrics,
+    load_propagation_events,
+)
+from project_config import (
+    DEMO_DIR,
+    OFFICIAL_RESPONSE_FILE,
+    SOCIAL_NETWORK_CONFIG_FILE,
+)
+from simulation.social_network import build_fixed_social_network
 from simulation.state_manager import (
     initialize_simulation_state,
     initialize_state_from_snapshot,
@@ -606,8 +616,28 @@ def prepare_scenario_state(
     return scenario_dir, state_dir
 
 
+# 2026/9/5，社交网络传播，新增功能：实验开始前生成五个策略共同使用的固定网络快照。
+def prepare_experiment_social_network(experiment_dir, max_agents=MAX_AGENTS):
+    """生成并保存本实验唯一的社交网络快照。"""
+    network_file = Path(experiment_dir) / "social_network_snapshot.json"
+    if network_file.exists():
+        raise FileExistsError(f"社交网络快照已经存在：{network_file}")
+    personas = load_personas(max_count=max_agents)
+    if not personas:
+        raise RuntimeError("没有可用于构建社交网络的Persona。")
+    network_config = load_json(SOCIAL_NETWORK_CONFIG_FILE)
+    social_network = build_fixed_social_network(personas, network_config)
+    save_json(network_file, social_network)
+    return network_file
+
+
 # 2026/08/22 系统重置与状态初始化，修改功能：向仿真子进程传递本批次独立输入路径。
-def run_simulation_step(state_dir, event_file, comment_pool_file):
+def run_simulation_step(
+    state_dir,
+    event_file,
+    comment_pool_file,
+    social_network_file=None,
+):
     """使用指定状态、事件和评论池运行一个时间步并返回性能结果。"""
     environment = os.environ.copy()
     environment["SIMULATION_STATE_DIR"] = str(Path(state_dir).resolve())
@@ -615,6 +645,11 @@ def run_simulation_step(state_dir, event_file, comment_pool_file):
     environment["SIMULATION_COMMENT_POOL_FILE"] = str(
         Path(comment_pool_file).resolve()
     )
+    if social_network_file is not None:
+        # 2026/9/5，社交网络传播，修改功能：场景子进程统一读取实验根目录的只读网络快照。
+        environment["SIMULATION_SOCIAL_NETWORK_FILE"] = str(
+            Path(social_network_file).resolve()
+        )
     environment["SIMULATION_RANDOM_SEED"] = str(RANDOM_SEED)
     environment["SIMULATION_COMMENT_TEMPERATURE"] = str(COMMENT_TEMPERATURE)
     # 2026/08/22 联调可靠性收尾：统一子进程输出编码，避免中文错误信息出现乱码。
@@ -787,6 +822,8 @@ def load_round_result(state_dir, event_id, step):
     round_result = {
         "step": step,
         "policy_metrics": extract_policy_metrics(round_metrics),
+        # 2026/9/5，社交网络传播第二阶段A，新增功能：场景逐轮结果附带传播指标。
+        "propagation_metrics": round_metrics.get("propagation_metrics", {}),
     }
     comment_quality = None
     if step > 1:
@@ -797,6 +834,23 @@ def load_round_result(state_dir, event_id, step):
         )
         round_result["comment_generation"] = comment_quality
     return round_result, comment_quality
+
+
+# 2026/9/5，社交网络传播第二阶段A，新增功能：汇总一个场景的累计传播覆盖和深度。
+def calculate_scenario_propagation_summary(state_dir, event_id):
+    """读取场景传播历史，并按实际参与Agent数计算累计传播指标。"""
+    state_path = Path(state_dir)
+    decision_records = read_jsonl(state_path / "decision_history.jsonl")
+    agent_ids = {
+        record.get("agent_id")
+        for record in decision_records
+        if record.get("event_id") == event_id and record.get("agent_id")
+    }
+    events = load_propagation_events(
+        state_path / "propagation_history.jsonl",
+        event_id,
+    )
+    return calculate_propagation_metrics(events, len(agent_ids))
 
 
 # 2026/08/27 舆情指标计算扩充，新增功能：汇总单个场景的恢复、反弹和负面过程指标。
@@ -892,6 +946,7 @@ def run_shared_pre_entry_baseline(
     experiment_dir,
     event_file,
     comment_pool_file,
+    social_network_file=None,
     stagnation_rounds=0,
     improvement_tolerance=0.05,
 ):
@@ -916,6 +971,7 @@ def run_shared_pre_entry_baseline(
             state_dir,
             event_file,
             comment_pool_file,
+            social_network_file,
         )
         step_results.append(step_result)
         round_result, comment_quality = load_round_result(
@@ -979,6 +1035,7 @@ def run_one_content_strategy(
     event_file,
     comment_pool_file,
     shared_baseline,
+    social_network_file=None,
 ):
     """复制共享基线，并从动态进场后的第一轮继续运行内容策略。"""
     # 2026/09/04 Demo性能基线，新增功能：记录单个策略自身执行的墙钟耗时和分轮性能。
@@ -1032,6 +1089,10 @@ def run_one_content_strategy(
             "rounds": rounds,
             "final_metrics": rounds[-1]["policy_metrics"],
             "comment_quality": summarize_comment_quality(quality_records),
+            "propagation_summary": calculate_scenario_propagation_summary(
+                state_dir,
+                event_input["event_id"],
+            ),
             "shared_baseline_completed_step": shared_baseline[
                 "completed_step"
             ],
@@ -1066,6 +1127,7 @@ def run_one_content_strategy(
             state_dir,
             event_file,
             comment_pool_file,
+            social_network_file,
         )
         step_results.append(step_result)
         round_result, comment_quality = load_round_result(
@@ -1114,6 +1176,10 @@ def run_one_content_strategy(
         "final_metrics": rounds[-1]["policy_metrics"],
         "effect_metrics": effect_metrics,
         "comment_quality": summarize_comment_quality(quality_records),
+        "propagation_summary": calculate_scenario_propagation_summary(
+            state_dir,
+            event_input["event_id"],
+        ),
         "shared_baseline_completed_step": shared_baseline["completed_step"],
         "state_dir": str(state_dir),
         "performance": performance,
@@ -1239,6 +1305,11 @@ def compare_strategy_results(strategy_results):
         if result.get("comment_quality", {}).get("quality_status")
         not in {None, "normal"}
     ]
+    # 2026/9/5，社交网络传播第二阶段A，新增功能：并列展示各策略传播指标，不预设传播越广越好。
+    comparison["propagation_metrics"] = {
+        result["strategy"]: result.get("propagation_summary", {})
+        for result in successful
+    }
     return comparison
 
 
@@ -1339,6 +1410,9 @@ def run_experiment(
     )
     entry_strategy = response_options["entry_strategy"]
 
+    # 2026/9/5，社交网络传播，新增功能：先固化网络，再让共享基线和全部策略读取同一文件。
+    social_network_file = prepare_experiment_social_network(experiment_dir)
+
     # 2026/08/23 内容策略对照，修改功能：先运行不回应基线，再运行内容策略场景。
     scenarios = select_strategy_scenarios(
         response_options,
@@ -1364,6 +1438,7 @@ def run_experiment(
             experiment_dir,
             event_file,
             comment_pool_file,
+            social_network_file,
             stagnation_rounds=response_options["stagnation_rounds"],
             improvement_tolerance=response_options[
                 "negative_rate_improvement_tolerance"
@@ -1445,6 +1520,7 @@ def run_experiment(
                 event_file,
                 comment_pool_file,
                 shared_baseline,
+                social_network_file,
             )
             if result.get("status") == "not_run":
                 print(
@@ -1561,6 +1637,7 @@ def run_experiment(
             if shared_baseline is not None
             else None
         ),
+        "social_network_file": str(social_network_file),
         "comparison_status": comparison_status,
         "strategy_results": strategy_results,
         "comparison": comparison,

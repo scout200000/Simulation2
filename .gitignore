@@ -1,15 +1,13 @@
-﻿__pycache__/
+# Python运行缓存
+__pycache__/
 *.py[cod]
 
+# 本机环境和密钥文件
 .env
 .env.*
 
-demo/experiments/
-demo/state/*
-!demo/state/.gitkeep
-demo/comment_pool.json
-
-visualization/data/real_trend.json
-
-output/personas/classification_progress.jsonl
-output/personas/faction_classification_progress.json
+# 编辑器和操作系统临时文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

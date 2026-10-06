@@ -36,6 +36,8 @@ AGENT_STATE_FILE = STATE_DIR / "agent_state_history.jsonl"
 DECISION_HISTORY_FILE = STATE_DIR / "decision_history.jsonl"
 INCREMENTAL_COMMENT_FILE = STATE_DIR / "incremental_comment_history.jsonl"
 METRICS_HISTORY_FILE = STATE_DIR / "metrics_history.jsonl"
+# 2026/9/5，社交网络传播第二阶段A，新增功能：为每个场景保存独立传播事件历史。
+PROPAGATION_HISTORY_FILE = STATE_DIR / "propagation_history.jsonl"
 
 # 2026/08/22 系统重置与状态初始化，修改功能：正式实验可读取本批次独立的评论池。
 COMMENT_POOL_FILE = Path(
@@ -46,14 +48,25 @@ COMMENT_POOL_FILE = Path(
 ).resolve()
 # 2026/09/05 评论人物类型配置归档，修改功能：从 Demo 配置目录读取评论生成模板。
 COMMENT_PROFILE_FILE = DEMO_DIR / "config" / "comment_profiles.json"
+# 2026/9/5，社交网络传播，新增功能：集中配置固定网络并允许实验子进程读取同一份网络快照。
+SOCIAL_NETWORK_CONFIG_FILE = DEMO_DIR / "config" / "social_network_config.json"
+SOCIAL_NETWORK_FILE = Path(
+    os.environ.get(
+        "SIMULATION_SOCIAL_NETWORK_FILE",
+        str(STATE_DIR / "social_network_snapshot.json"),
+    )
+).resolve()
 # 2026/09/05 示例文件归档，修改功能：单 Agent 调试结果统一保存到 example 目录。
 SINGLE_DECISION_RESULT_FILE = EXAMPLE_DIR / "decision_result.json"
 SINGLE_LLM_RESULT_FILE = EXAMPLE_DIR / "decision_result_llm.json"
 
-# DeepSeek 配置。建议实际运行时改为环境变量或本地配置文件。
-DEEPSEEK_API_KEY = "DEEPSEEK_API_KEY"
-DEEPSEEK_MODEL = "deepseek-v4-flash"
-DEEPSEEK_ENDPOINT = "https://api.deepseek.com/chat/completions"
+# 2026/09/06 GitHub推送安全处理，修改功能：从环境变量读取模型配置，避免提交本机密钥。
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
+DEEPSEEK_ENDPOINT = os.environ.get(
+    "DEEPSEEK_ENDPOINT",
+    "https://api.deepseek.com/chat/completions",
+)
 REQUEST_TIMEOUT = 120
 
 # 联调修改：增加DeepSeek请求和评论批次的重试配置 2026/08/21 19：06

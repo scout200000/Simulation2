@@ -18,6 +18,8 @@ JSONL_STATE_FILE_NAMES = (
     "agent_state_history.jsonl",
     "incremental_comment_history.jsonl",
     "metrics_history.jsonl",
+    # 2026/9/5，社交网络传播第二阶段A，新增功能：初始化、复制和校验传播事件文件。
+    "propagation_history.jsonl",
 )
 
 

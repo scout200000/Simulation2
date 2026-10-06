@@ -137,6 +137,7 @@ def summarize_comment_group(comments):
 
 
 # 2026/08/28 第十七次联调修复-修复证据时间语义，新增功能：区分本轮新评论、历史转发和应急评论。
+# 2026/9/5，社交网络传播，修改功能：邻居上一轮表达按本轮再次传播处理。
 def classify_visible_comment_source(comment, current_step):
     """根据时间步和来源字段返回评论的证据类型。"""
     if (
@@ -146,7 +147,7 @@ def classify_visible_comment_source(comment, current_step):
         return "historical"
 
     source_type = comment.get("source_type")
-    if source_type == "repost_fallback":
+    if source_type in {"repost_fallback", "neighbor_propagation"}:
         return "current_repost"
     if source_type == "local_emergency_fallback":
         return "current_emergency"
@@ -583,7 +584,7 @@ def build_decision_prompt(event_context, choices, candidates, previous_state, hi
 9. 决策理由必须引用事件原文、当前声明、Persona 摘要、个人评论历史或分层可见评论，不得以“系统标签为负面”直接得出情绪结论。
 10. 不要预设任何一种官方内容策略必然更好，必须结合 Persona 和本轮证据作出判断。
 11. official_statement_timing.is_new 为 true 时，声明是本轮新增证据；为 false 时只是此前声明继续有效，不得反复当作首次发布。
-12. current_repost_comments 是旧观点在本轮重新传播，可以说明观点仍有热度，但不代表出现了新事实；current_emergency_comments 不得作为改变情绪的主要依据。
+12. current_repost_comments 包含历史兜底和邻居上一轮表达在本轮的再次传播，可以说明观点仍有热度，但不代表出现了新事实；current_emergency_comments 不得作为改变情绪的主要依据。
 13. Agent恢复后，如果本轮LLM新评论出现充分的新负面证据，仍可重新转为 negative；不得因为旧声明仍在就永久保持 neutral。
 
 个人可见评论只用于判断当前舆论环境。本阶段不要选择具体评论编号。
@@ -651,12 +652,13 @@ def build_final_decision(
     cognition_decision,
     selected_comment,
     scored_candidates,
-    global_candidate_count,
+    visible_candidate_count,
 ):
-    """组合认知结果，并记录从全局候选池选择的最终评论。"""
+    """组合认知结果，并记录从个人可见范围选择的最终评论。"""
     decision = dict(cognition_decision)
-    decision["selection_source"] = "global_candidate_pool"
-    decision["global_candidate_count"] = global_candidate_count
+    # 2026/9/5，社交网络传播，修改功能：最终表达来源改为Agent个人可见评论。
+    decision["selection_source"] = "personal_visible_comments"
+    decision["visible_candidate_count"] = visible_candidate_count
     decision["scored_candidate_count"] = len(scored_candidates)
 
     if not decision["will_comment"]:
@@ -666,7 +668,7 @@ def build_final_decision(
         return decision
 
     if selected_comment is None or not scored_candidates:
-        raise ValueError("Agent决定评论，但全局候选评论池为空。")
+        raise ValueError("Agent决定评论，但个人可见候选评论为空。")
 
     decision["selected_comment_id"] = selected_comment["comment_id"]
     decision["selected_comment"] = selected_comment

@@ -1,9 +1,6 @@
 """计算并保存Demo阶段的舆情指标。
 
-当前只实现三个指标：
-1. LLM分析全局评论趋势；
-2. Agent负面情绪率；
-3. Agent对官方态度分布。
+当前按轮计算全局评论趋势、Agent情绪、官方态度和社交传播指标。
 
 单次实验结束后还可基于逐轮指标和Agent状态历史计算过程指标。
 """
@@ -14,6 +11,10 @@ from comments.repository import load_comment_pool, load_incremental_comments
 from simulation.event_context import load_event_context
 from infrastructure.json_storage import append_jsonl, read_jsonl
 from infrastructure.llm_service import call_deepseek_json
+from evaluation.propagation_metrics import (
+    calculate_propagation_metrics,
+    load_propagation_events,
+)
 from project_config import (
     COMMENT_POOL_FILE,
     DECISION_HISTORY_FILE,
@@ -21,6 +22,7 @@ from project_config import (
     EVENT_STATE_FILE,
     INCREMENTAL_COMMENT_FILE,
     METRICS_HISTORY_FILE,
+    PROPAGATION_HISTORY_FILE,
     ensure_runtime_directories,
 )
 
@@ -252,8 +254,13 @@ def calculate_attitude_distribution(agent_decisions, statement_status=None):
 
 
 # 2026/08/25 第五次联调问题修复，修改功能：保存完整情绪分布并按声明状态计算官方态度。
-def calculate_round_metrics(event_context, agent_decisions, global_trend):
-    """组合Demo阶段的三项指标，生成一个时间步的指标记录。"""
+def calculate_round_metrics(
+    event_context,
+    agent_decisions,
+    global_trend,
+    propagation_metrics=None,
+):
+    """组合舆情状态和传播指标，生成一个时间步的指标记录。"""
     successful_decisions = filter_successful_decisions(agent_decisions)
     return {
         "event_id": event_context["event_id"],
@@ -272,6 +279,9 @@ def calculate_round_metrics(event_context, agent_decisions, global_trend):
                 "none",
             ),
         ),
+        # 2026/9/5，社交网络传播第二阶段A，新增功能：在单轮指标中保存传播覆盖和深度。
+        "propagation_metrics": propagation_metrics
+        or calculate_propagation_metrics([], len(successful_decisions)),
     }
 
 
@@ -322,10 +332,20 @@ def run_round_metrics():
         initial_comments,
         current_incremental_comments,
     )
+    propagation_events = load_propagation_events(
+        PROPAGATION_HISTORY_FILE,
+        event_id,
+        current_step,
+    )
+    propagation_metrics = calculate_propagation_metrics(
+        propagation_events,
+        len(agent_decisions),
+    )
     round_metrics = calculate_round_metrics(
         event_context,
         agent_decisions,
         global_trend,
+        propagation_metrics,
     )
     save_round_metrics(round_metrics, METRICS_HISTORY_FILE)
 
