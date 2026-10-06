@@ -168,6 +168,25 @@ python visualization\app.py --no-browser
 
 服务启动后，在网页中选择已经完成的历史复现实验进行展示。按 `Ctrl+C` 停止服务。
 
+## 启动仿真控制台后端
+
+本仓库只保留后端 API。启动接口服务：
+
+```powershell
+& .\.venv\Scripts\python.exe demo\api_server.py --port 8770
+```
+
+V1/V2 前端源码已经迁移到独立的 `Simulation2-frontend` 项目。启动前端：
+
+```powershell
+cd D:\Simulation2-frontend
+pnpm run dev
+```
+
+浏览器访问 `http://127.0.0.1:5173`，前端通过 `/api` 代理连接 `8770`。
+
+完整接口和会话控制语义见 [`WEB_API.md`](./WEB_API.md)。
+
 ## 最短运行顺序
 
 首次安装并完成配置后，可以按以下顺序操作：

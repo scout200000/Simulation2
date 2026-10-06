@@ -85,12 +85,13 @@ selection = apply_strategy_web_input("custom")
 ## HTTP 服务
 
 ```powershell
-& .\.venv\Scripts\python.exe demo\web_server.py
+& .\.venv\Scripts\python.exe demo\api_server.py
 ```
 
-默认地址为 `http://127.0.0.1:8770`。同一服务同时托管
-`Simulation2/visualization/web` 控制台页面，直接访问首页即可使用事件、
-公告、策略输入和会话控制。以下为创建会话的 JSON 请求体：
+默认地址为 `http://127.0.0.1:8770`。本仓库的服务只提供后端 JSON API；
+V1/V2 前端源码已迁移到独立 `Simulation2-frontend` 项目。
+
+以下为创建会话的 JSON 请求体：
 
 ```json
 {
@@ -131,7 +132,7 @@ selection = apply_strategy_web_input("custom")
 | 函数 | 行为 |
 | --- | --- |
 | `create_web_experiment(...)` | 创建不可覆盖批次并写入控制文件，不调用 LLM |
-| `start_web_experiment(experiment_id)` | 生成初始评论池并初始化共享基线 |
+| `start_web_experiment(experiment_id)` | 生成初始评论池并进入对应策略的首轮运行状态 |
 | `step_web_experiment(experiment_id)` | 执行一个时间步，执行后自动暂停 |
 | `continue_web_experiment(experiment_id)` | 清空暂停并执行一个时间步 |
 | `pause_web_experiment(experiment_id)` | 设置暂停，阻止下一次推进 |
@@ -176,6 +177,7 @@ rollback_web_experiment(experiment_id, steps=1)
 
 - `create` 只创建事件/公告/策略快照，不生成评论池。
 - `start` 生成初始评论池并创建 `_shared_baseline` 状态。
+- 不回应策略不创建进场前基线，直接从第 1 轮运行控制场景。
 - 固定轮次/公告时间线模式不创建基线，直接从第 1 轮运行所选策略，并按时间线
   在指定轮次发布公告。
 - `step`/`continue` 每次最多执行一个时间步；步骤完成后 `paused=true`。
@@ -183,7 +185,8 @@ rollback_web_experiment(experiment_id, steps=1)
 - `rollback` 恢复该步开始前的检查点；回滚跨越基线/场景边界时会清理旧的
   策略状态目录并删除过期的 `scenario_result.json`。
 - `restart` 保留旧批次不可覆盖，新建一个同输入批次；若旧批次已有初始评论池，
-  会复制该评论池以降低 LLM 成本。
+  会复制该评论池以降低 LLM 成本。V1/V2 页面在重启成功后同步更新 URL 哈希，
+  刷新页面仍打开新批次。
 - 会话暂停时可通过 `add_web_announcement()` 或
   `POST /api/sessions/{id}/announcement` 添加/替换任意轮次的公告。
 

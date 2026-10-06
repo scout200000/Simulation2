@@ -32,6 +32,28 @@
 | `evaluation/metrics.py` | 计算Agent指标、趋势和过程效果 |
 | `infrastructure/llm_service.py` | 统一HTTP请求、JSON解析、重试和性能统计 |
 | `infrastructure/json_storage.py` | JSON与JSONL读写 |
+| `web_api.py` | 统一 Web 输入、会话控制和状态查询门面 |
+| `web_control.py` | 单策略逐轮状态机、公告时间线、检查点和回滚 |
+| `api_server.py` | 后端 API 本地 HTTP 服务，默认端口 `8770`，不包含前端源码 |
+
+## Web 控制层
+
+```text
+外部 V1 / V2 Vue 项目
+        ↓ HTTP JSON /api
+api_server.py
+        ↓
+web_api.py
+        ↓
+web_control.py
+        ↓
+单轮仿真 runner 与实验状态目录
+```
+
+- V1/V2 源码已迁移到独立的 `Simulation2-frontend` 项目。
+- 后端只提供 `/api`，默认端口 `8770`。
+- 两版共用 `web_api.py` 和 `web_control.py`，不复制仿真计算逻辑。
+- 不回应策略跳过进场前基线，直接从第 1 轮运行控制场景。
 
 ## 状态边界
 
@@ -39,6 +61,7 @@
 - `demo/state`是默认临时状态；正式实验使用批次内独立状态目录。
 - `demo/experiments`保存不可覆盖的事件、策略、评论、状态和结果快照。
 - 所有策略场景共享进场前基线，进场后使用独立目录，禁止互相读取状态。
+- Web 单策略控制会额外保存 `web_control.json` 和 `.web_checkpoints`；不回应策略不创建共享基线。
 - 历史趋势复现位于`demo/historical_replay`，不调用五策略入口。
 
 ## LLM与本地逻辑边界

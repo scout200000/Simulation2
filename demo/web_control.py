@@ -360,7 +360,7 @@ def _start_direct_scenario(
     control: dict,
     event_input: dict,
 ) -> None:
-    """固定轮次/时间线模式：不跑基线，直接从第 1 轮运行所选策略。"""
+    """不回应或固定时机模式：不跑基线，直接从第 1 轮运行所选策略。"""
     event_id = event_input["event_id"]
     strategy_id = control["selected_strategy_id"]
     strategy = _selected_strategy(
@@ -386,6 +386,10 @@ def _start_direct_scenario(
     control["phase"] = "scenario"
     control["current_step"] = 1
     control["baseline_completed_step"] = 0
+    if strategy_id == NO_RESPONSE_SCENARIO["strategy_id"]:
+        control["response_step"] = None
+        control["entry_reason"] = None
+        return
     timeline = control.get("announcement_timeline", []) or []
     if timeline:
         control["response_step"] = timeline[0]["round"]
@@ -737,7 +741,7 @@ def create_web_experiment(
 
 
 def start_web_experiment(experiment_id):
-    """准备初始评论池并初始化共享基线，准备逐轮运行。"""
+    """准备初始评论池并进入对应策略的首轮运行状态。"""
     experiment_dir = _experiment_dir(experiment_id)
     control = _load_control(experiment_dir)
     if control.get("phase") != "created":
@@ -761,7 +765,12 @@ def start_web_experiment(experiment_id):
         return get_web_experiment_status(experiment_id)
     timing = control.get("entry_timing") or {}
     timeline = control.get("announcement_timeline", []) or []
-    if timing.get("mode") == "fixed_round" or timeline:
+    if (
+        control.get("selected_strategy_id")
+        == NO_RESPONSE_SCENARIO["strategy_id"]
+        or timing.get("mode") == "fixed_round"
+        or timeline
+    ):
         _start_direct_scenario(experiment_dir, control, event_input)
         if control.get("status") == "not_run":
             _save_control(experiment_dir, control)

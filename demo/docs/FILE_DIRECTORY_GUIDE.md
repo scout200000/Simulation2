@@ -23,7 +23,7 @@
 | `comment/` | 历史原型 | 保留早期评论池、评分和分析原型 | 当前 Demo 不再依赖该目录，不作为正式入口 |
 | `persona_pipeline/` | 辅助工具 | 从原始社交数据构建 Persona、情绪阈值和派系偏好 | 画像重新生成时使用 |
 | `output/` | 当前核心数据 | 保存 Persona 构建结果和全局策略配置 | 当前 Agent 决策会读取 `output/personas` |
-| `visualization/` | 辅助工具 | 读取历史复现实验与人工真实趋势，提供网页可视化和对比 | 只读仿真结果，不参与仿真计算 |
+| `visualization/` | 辅助工具 | 提供历史趋势对比和社交网络传播专题页面；V1/V2 控制台已迁移到独立前端项目 | 当前仓库不再保存 V1/V2 前端源码 |
 | `agentsociety2/` | 外部参考 | AgentSociety 相关框架代码 | 当前 `demo/main.py` 不以它作为运行入口 |
 | `oasis-master/` | 外部参考 | OASIS 社交媒体仿真框架和示例 | 用于设计参考，修改前应先确认是否准备正式集成 |
 | `TrendSim/` | 外部参考 | 另一套舆情趋势模拟原型 | 与当前 Demo 相互独立 |
@@ -42,8 +42,8 @@
 | `project_config.py` | 当前核心 | 集中定义项目路径、模型参数、Agent 数量、并发数、评论数量、重试次数、质量阈值和可见评论数量等配置 |
 | `experiment_runner.py` | 当前核心 | 五策略实验总调度器；运行共享进场前基线、判断官方动态进场、分流各策略、汇总质量与性能并比较策略结果；提供公告输入解析和单策略触发函数供控制页面调用 |
 | `web_api.py` | 当前核心 | web 输入与会话控制 API 的统一门面，集中导出事件、公告、策略与暂停/继续/回滚/重启函数 |
-| `web_control.py` | 当前核心 | 单策略逐步控制层；维护 `web_control.json` 和回滚检查点，复用现有单轮仿真入口 |
-| `web_server.py` | 辅助工具 | 纯标准库本地 HTTP 服务，将 `web_api` 暴露为 JSON 接口 |
+| `web_control.py` | 当前核心 | 单策略逐步控制层；维护 `web_control.json`、公告时间线和回滚检查点，复用现有单轮仿真入口 |
+| `api_server.py` | 辅助工具 | 纯标准库后端 API HTTP 服务，默认端口 `8770`，不托管前端静态页面 |
 | `event_example.json` | 当前核心输入 | 当前五策略实验的事件材料，包括 `event_id`、事件描述、标签和初始状态等 |
 | `official_response_options.json` | 当前核心输入 | 配置“不回应、事实通报、共情安抚、辟谣澄清、处置进展、自定义”等实验场景及官方声明内容、状态与进场规则 |
 | `comment_pool.json` | 运行产物 | 当前调试或最近一次准备得到的初始评论池；正式批次会复制独立快照 |
@@ -282,7 +282,7 @@ demo/experiments/<experiment_id>/
 
 `agent_<user_id>.json` 的具体文件名对应不同 Agent，但文件职责相同。正式修改画像生成规则时应修改 `persona_pipeline`，不建议批量手工改写生成结果。
 
-## 七、`visualization`：历史趋势展示网页
+## 七、`visualization`：历史趋势展示与仿真控制台
 
 | 文件 | 类型 | 主要功能 |
 | --- | --- | --- |
@@ -294,7 +294,7 @@ demo/experiments/<experiment_id>/
 | `comparison_service.py` | 辅助工具 | 对齐模拟趋势与人工真实趋势，计算方向一致性、平均绝对差和峰值轮次差等展示指标 |
 | `__init__.py` | 包文件 | 将目录标记为 Python 包 |
 | `data/real_trend.json` | 处理产物 | 从真实数据表生成的标准化趋势数据，网页直接读取 |
-| `web/` | 当前交互页面 | 事件/公告/策略输入与会话控制台，由 `demo/web_server.py` 托管 |
+| 独立 `Simulation2-frontend/` | 外部前端项目 | V1/V2 Vue 3 页面、Vite 构建、API 代理和前端依赖，不在本仓库内 |
 | `static/index.html` | 前端页面 | 定义可视化页面结构和展示容器 |
 | `static/app.js` | 前端逻辑 | 调用本地接口并绘制趋势、指标卡、轮次表格和对比结果 |
 | `static/styles.css` | 前端样式 | 控制页面配色、布局、响应式显示和组件样式 |
@@ -369,7 +369,7 @@ demo/experiments/<experiment_id>/
 | 修改动态进场或策略比较 | `demo/experiment_runner.py` |
 | 修改舆情指标 | `demo/evaluation/metrics.py`、`demo/experiment_runner.py` |
 | 运行历史趋势复现 | `demo/docs/HISTORICAL_REPLAY.md`、`demo/historical_replay/main.py` |
-| 修改网页展示 | `demo/docs/VISUALIZATION.md`、`visualization/` |
+| 修改 V1/V2 仿真控制台 | 独立项目 `Simulation2-frontend/`；接口契约参考 `demo/docs/WEB_API.md` |
 | 重建 Persona | `persona_pipeline/`、`output/personas/` |
 | 查看历史决策和修复背景 | `demo/docs/detail.md`、`demo/docs/INTEGRATION_TEST_HISTORY.md` |
 

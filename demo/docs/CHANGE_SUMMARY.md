@@ -54,7 +54,7 @@ demo/experiments/<experiment_id>/web_control.json
 - 追加公告
 - 查询状态和实时快照
 
-HTTP 路由由 `demo/web_server.py` 提供，函数门面为 `demo/web_api.py`。
+HTTP 路由由 `demo/api_server.py` 提供，函数门面为 `demo/web_api.py`。
 
 ## 4. 固定轮次与公告时间线
 
@@ -131,15 +131,13 @@ comment_orientation
 - 外圈颜色表示官方态度；
 - 点击小球查看单 Agent 详情。
 
-## 7. 前端控制台
+## 7. 双版本前端控制台（已分离）
 
-页面目录：
+V1/V2 的 Vue 源码、样式、前端依赖和构建配置已经迁移到独立的
+`Simulation2-frontend` 项目。本仓库不再保存 `visualization/web` 或
+`visualization/web2` 前端代码，只保留后端 API。
 
-```text
-visualization/web/
-```
-
-主要布局：
+V1 主要布局：
 
 - 舆情指标：一级直接显示折线图；
 - Agent 状态：一级数值卡，点击进入 Agent 二级抽屉；
@@ -155,6 +153,21 @@ visualization/web/
 - 官方进场标记；
 - 多条追加公告轮次标记；
 - 数据点悬浮数值。
+
+V2 是独立于 V1 的单屏控制台，主要布局为：
+
+- 左侧：会话状态、Agent 全连接网络、舆情指标和评论分布图表；
+- 中间：事件输入和公告策略；
+- 右侧：官方发布时机和暂停时追加公告；
+- 底层：启动、继续、暂停、回滚和重启批次控制。
+
+V2 交互包括：
+
+- Agent 网络图直接显示在主界面，点击节点打开 Agent 二级详情；
+- 舆论池改为情绪环形图、派系柱状图和信息取向柱状图；
+- 页面固定在单屏内，不需要滚动查看主要状态；
+- 追加公告输入框随内容增高，上限为 `160px`；
+- 重启新批次后同步更新浏览器 URL 哈希，刷新后仍打开新批次。
 
 ## 8. 错误修复
 
@@ -174,17 +187,24 @@ visualization/web/
 
 ## 9. 运行方式
 
-启动 Web API 和控制台：
+启动后端 API：
 
 ```powershell
 cd D:\Simulation2
-& .\.venv\Scripts\python.exe demo\web_server.py --port 8770
+& .\.venv\Scripts\python.exe demo\api_server.py --port 8770
+```
+
+启动独立前端项目：
+
+```powershell
+cd D:\Simulation2-frontend
+pnpm run dev
 ```
 
 浏览器访问：
 
 ```text
-http://127.0.0.1:8770
+http://127.0.0.1:5173
 ```
 
 ## 10. 已验证内容
@@ -200,5 +220,9 @@ http://127.0.0.1:8770
 - 无效趋势证据编号过滤
 - 检查点覆盖重建
 - 回滚检查点清理
+- 不回应策略不创建进场前基线，直接从第 1 轮运行
+- V2 单屏布局在 `1440×900` 和 `1280×720` 下无页面滚动
+- V2 Agent 网络、评论分布图表和重启 URL 同步
+- V2 追加公告输入框自适应高度
 
 完整 API 细节见 `WEB_API.md`。
