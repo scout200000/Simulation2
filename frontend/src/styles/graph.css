@@ -1,0 +1,1203 @@
+/* 历史事件知识图谱 · 单屏关系画布
+   页面固定为一屏：顶栏 + 工具条 + 自适应画布；图例、统计、详情、提示都叠在画布内部。 */
+
+.graph-page {
+  --graph-ink: #16211e;
+  --graph-muted: #6b7a74;
+  --graph-faint: #93a29a;
+  --graph-line: #dde5df;
+  --graph-line-strong: #cbd8d1;
+  --graph-accent: #e85d2a;
+  --graph-teal: #1d746b;
+  height: 100vh;
+  min-height: 600px;
+  display: grid;
+  grid-template-rows: 64px minmax(0, 1fr);
+  gap: 12px;
+  padding: 0 clamp(16px, 3vw, 40px) 14px;
+  overflow: hidden;
+  color: var(--graph-ink);
+  background:
+    linear-gradient(rgba(28, 57, 50, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 57, 50, 0.035) 1px, transparent 1px),
+    #eef2ed;
+  background-size: 48px 48px;
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+.graph-page * {
+  box-sizing: border-box;
+}
+
+.graph-page h1,
+.graph-page h2,
+.graph-page p {
+  margin: 0;
+}
+
+.graph-page button,
+.graph-page input {
+  font: inherit;
+}
+
+.graph-page button {
+  cursor: pointer;
+}
+
+.graph-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.graph-page :focus-visible {
+  outline: 2px solid var(--graph-teal);
+  outline-offset: 2px;
+}
+
+/* ── 顶栏 ───────────────────────────────────────────────── */
+.graph-header {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid rgba(74, 98, 88, 0.16);
+}
+
+.graph-heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.graph-back {
+  flex: none;
+  color: var(--graph-muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.graph-back:hover {
+  color: var(--graph-accent);
+}
+
+.graph-title {
+  min-width: 0;
+}
+
+.graph-title p {
+  color: var(--graph-accent);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.graph-title h1 {
+  overflow: hidden;
+  font-size: 23px;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.graph-header-side {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.graph-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.graph-meta-chips span {
+  padding: 4px 9px;
+  border: 1px solid var(--graph-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #6b7a74;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.graph-meta-chips b {
+  color: var(--graph-teal);
+  font-size: 11px;
+}
+
+.graph-meta-chips .muted {
+  color: var(--graph-faint);
+}
+
+.graph-meta-chips .storage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.graph-meta-chips .storage-chip i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c9a26b;
+}
+
+.graph-meta-chips .storage-chip.neo4j i {
+  background: #2f9e7a;
+  box-shadow: 0 0 0 3px rgba(47, 158, 122, 0.12);
+}
+
+.graph-button {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 6px;
+  background: #fff;
+  color: #4b5a54;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.graph-button:hover {
+  border-color: #a9c4b7;
+  background: #f3f9f6;
+  color: #17705f;
+}
+
+.graph-button.primary {
+  border-color: var(--graph-teal);
+  background: var(--graph-teal);
+  color: #fff;
+}
+
+.graph-button.primary:hover {
+  border-color: #176057;
+  background: #176057;
+  color: #fff;
+}
+
+/* ── 画布容器 ───────────────────────────────────────────── */
+.graph-body {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--graph-line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(36, 56, 48, 0.06);
+}
+
+.graph-toolbar {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #edf2ee;
+  background: #fbfcfb;
+}
+
+.graph-layers {
+  flex: none;
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #e2eae4;
+  border-radius: 6px;
+}
+
+.graph-layers button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  background: #fff;
+  color: #6b7a74;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.graph-layers button + button {
+  border-left: 1px solid #e2eae4;
+}
+
+.graph-layers button.active {
+  background: #e7f0ec;
+  color: #17695e;
+}
+
+.graph-viewmode {
+  flex: none;
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #e2eae4;
+  border-radius: 6px;
+}
+
+.graph-viewmode button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  background: #fff;
+  color: #6b7a74;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.graph-viewmode button + button {
+  border-left: 1px solid #e2eae4;
+}
+
+.graph-viewmode button.active {
+  background: #e7f0ec;
+  color: #17695e;
+}
+
+.graph-link-filter {
+  flex: none;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #e2eae4;
+  border-radius: 6px;
+  background: #fff;
+  color: #6b7a74;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.graph-link-filter.active {
+  border-color: #cfe0d7;
+  background: #e7f0ec;
+  color: #17695e;
+}
+
+.graph-breadcrumb {
+  flex: none;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid #e2eae4;
+  border-radius: 6px;
+  background: #fff;
+  color: #5f7068;
+  font-size: 11px;
+}
+
+.graph-breadcrumb button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #17695e;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.graph-breadcrumb b {
+  color: #c2cdc6;
+  font-weight: 400;
+}
+
+.graph-breadcrumb em {
+  color: #2f3f37;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.graph-toolbar-hint {
+  flex: 1;
+  min-width: 60px;
+  overflow: hidden;
+  color: var(--graph-faint);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graph-search {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.graph-search span {
+  color: #8a9891;
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+.graph-search input {
+  width: 188px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: #33443c;
+  font-size: 11.5px;
+}
+
+.graph-search input:focus {
+  border-color: var(--graph-teal);
+  box-shadow: 0 0 0 2px rgba(29, 116, 107, 0.12);
+}
+
+.graph-zoom {
+  flex: none;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border: 1px solid var(--graph-line);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.graph-zoom button {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #53625b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.graph-zoom button:hover {
+  background: #eaf3ee;
+  color: #17695e;
+}
+
+.graph-zoom span {
+  min-width: 40px;
+  color: #7d8c85;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 画布 ───────────────────────────────────────────────── */
+.graph-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 42%, #fcfefc 0%, #f3f8f5 58%, #ecf2ee 100%);
+  cursor: grab;
+  touch-action: none;
+}
+
+.graph-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(38, 74, 62, 0.13) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.graph-stage.dragging {
+  cursor: grabbing;
+}
+
+.graph-svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 连线 */
+.graph-edge {
+  fill: none;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 0.18s ease, stroke-opacity 0.18s ease;
+}
+
+.edge-EventLink {
+  stroke: #5a7d6f;
+  stroke-opacity: 0.72;
+}
+
+.edge-ClusterLink {
+  stroke: #1d746b;
+  stroke-opacity: 0.5;
+}
+
+.edge-Topic {
+  stroke: #8b9fce;
+  stroke-opacity: 0.38;
+}
+
+.edge-Actor {
+  stroke: #7fb0a4;
+  stroke-opacity: 0.38;
+}
+
+.edge-Location {
+  stroke: #cfa872;
+  stroke-opacity: 0.4;
+}
+
+.edge-Cause {
+  stroke: #a48bce;
+  stroke-opacity: 0.38;
+}
+
+.edge-Consequence {
+  stroke: #cf8a80;
+  stroke-opacity: 0.38;
+}
+
+.graph-edge.active {
+  stroke-opacity: 0.95;
+}
+
+.graph-edge.dimmed {
+  opacity: 0.12;
+}
+
+.graph-edge-label {
+  fill: #4a5a52;
+  font-size: 9.5px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #f8fbf9;
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 节点 */
+.graph-node {
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.18s ease;
+}
+
+.graph-node.dimmed {
+  opacity: 0.18;
+}
+
+.graph-node .node-body {
+  stroke: #ffffff;
+  stroke-width: 1.4;
+  transition: stroke-width 0.16s ease;
+}
+
+.graph-node:hover .node-body,
+.graph-node.focused .node-body {
+  stroke-width: 2.4;
+}
+
+.graph-node.matched .node-body {
+  stroke: var(--graph-accent);
+  stroke-width: 2.6;
+}
+
+.graph-node.selected .node-body {
+  stroke: #1d2b25;
+  stroke-width: 2.4;
+}
+
+.node-halo {
+  opacity: 0.12;
+}
+
+.node-shared-ring {
+  fill: none;
+  stroke: #4f7d6d;
+  stroke-width: 1.1;
+  stroke-dasharray: 3 3;
+  opacity: 0.75;
+}
+
+.node-selection {
+  fill: none;
+  stroke: #2b3a33;
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  opacity: 0.8;
+  animation: kg-selection-dash 9s linear infinite;
+}
+
+.node-core-text {
+  fill: #ffffff;
+  font-size: 8.4px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  pointer-events: none;
+  user-select: none;
+}
+
+.node-core-text.event-core {
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+}
+
+.node-core-text.cluster-core {
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.node-Cluster .node-body {
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.node-Cluster .node-label {
+  fill: #145f56;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cluster-sub-label {
+  fill: #5f7068;
+  font-size: 9.5px;
+}
+
+.node-label {
+  fill: #43544c;
+  font-size: 9.5px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #f6faf8;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  user-select: none;
+}
+
+.node-label.event-label {
+  fill: #25352d;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.node-sub-label {
+  fill: #8a9891;
+  font-size: 9px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: #f6faf8;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  user-select: none;
+}
+
+.node-Topic .node-label {
+  fill: #33507e;
+}
+
+.node-Actor .node-label {
+  fill: #17695e;
+}
+
+.node-Location .node-label {
+  fill: #8a6420;
+}
+
+.node-Cause .node-label,
+.node-Consequence .node-label {
+  fill: #5c4a7a;
+}
+
+@keyframes kg-selection-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+/* ── 画布内浮层 ─────────────────────────────────────────── */
+.graph-canvas-meta {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  gap: 2px;
+  padding: 8px 11px;
+  border: 1px solid #e3ece6;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  pointer-events: none;
+}
+
+.graph-canvas-meta strong {
+  color: #2f3f37;
+  font-size: 12px;
+}
+
+.graph-canvas-meta span {
+  color: var(--graph-faint);
+  font-size: 10px;
+}
+
+.graph-canvas-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  color: #93a29a;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.graph-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  max-width: calc(100% - 240px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+  padding: 8px 11px;
+  border: 1px solid #e3ece6;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.93);
+  backdrop-filter: blur(6px);
+  color: #4f5f57;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.legend-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.legend-shape {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+}
+
+.legend-shape.shape-circle {
+  border-radius: 50%;
+}
+
+.legend-shape.shape-square {
+  border-radius: 2px;
+}
+
+.legend-shape.shape-diamond {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+}
+
+.legend-shape.shape-hex {
+  border-radius: 1px;
+  clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+}
+
+.legend-line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+  border-radius: 2px;
+}
+
+.legend-line.event-link {
+  background: #5a7d6f;
+}
+
+.legend-line.cluster-link {
+  background: #1d746b;
+}
+
+.legend-line.element-link {
+  background: #b7c9c0;
+}
+
+.legend-ring {
+  width: 9px;
+  height: 9px;
+  display: inline-block;
+  border: 1.5px solid #7d8c85;
+  border-radius: 50%;
+}
+
+/* 悬浮提示 */
+.graph-tooltip {
+  position: absolute;
+  z-index: 7;
+  width: 200px;
+  display: grid;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid #dfe8e2;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 12px 28px rgba(30, 50, 42, 0.14);
+  pointer-events: none;
+}
+
+.graph-tooltip span {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.graph-tooltip strong {
+  color: #26352e;
+  font-size: 12px;
+}
+
+.graph-tooltip small {
+  overflow: hidden;
+  color: #7d8c85;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 事件详情（画布内） ─────────────────────────────────── */
+.graph-inspector {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
+  width: 332px;
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid #e1e9e4;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 18px 44px rgba(30, 50, 42, 0.16);
+  backdrop-filter: blur(8px);
+}
+
+.inspector-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inspector-type {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.inspector-head h2 {
+  margin-top: 3px;
+  font-size: 17px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.inspector-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e2eae4;
+  border-radius: 6px;
+  background: #fff;
+  color: #7d8c85;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.inspector-close:hover {
+  border-color: #b9cdc3;
+  color: #b33b35;
+}
+
+.inspector-meta {
+  margin-top: 6px !important;
+  color: #7d8c85;
+  font-size: 10px;
+}
+
+.inspector-summary {
+  margin-top: 10px !important;
+  max-height: 116px;
+  overflow-y: auto;
+  color: #38473f;
+  font-size: 11px;
+  line-height: 1.75;
+}
+
+.inspector-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.inspector-facts span {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #f1f6f3;
+  color: #4f5f57;
+  font-size: 10px;
+}
+
+.inspector-block {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.inspector-block > span {
+  color: #7d8c85;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.opinion-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: #6b7a74;
+}
+
+.opinion-row i {
+  height: 6px;
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #eff3f0;
+}
+
+.opinion-row b {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: #7d9b91;
+}
+
+.opinion-row:nth-of-type(1) b {
+  background: #c05952;
+}
+
+.opinion-row:nth-of-type(2) b {
+  background: #b98a4b;
+}
+
+.opinion-row:nth-of-type(3) b {
+  background: #3f8f6a;
+}
+
+.opinion-row small {
+  color: #8a9891;
+  font-size: 9.5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.related-list {
+  display: grid;
+  gap: 6px;
+}
+
+.related-list button {
+  display: grid;
+  gap: 3px;
+  padding: 8px 9px;
+  border: 1px solid #e9f0eb;
+  border-radius: 7px;
+  background: #fbfdfb;
+  text-align: left;
+}
+
+.related-list button:hover {
+  border-color: #c9dcd2;
+  background: #f3f9f6;
+}
+
+.related-list strong {
+  color: #2f3f37;
+  font-size: 11.5px;
+}
+
+.related-list small {
+  color: #8a9891;
+  font-size: 9.5px;
+}
+
+.shared-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.shared-chips em {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #eef4f1;
+  color: #4f7d6d;
+  font-size: 9px;
+  font-style: normal;
+}
+
+.inspector-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.inspector-chips em {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #f2f5f3;
+  color: #4a5a52;
+  font-size: 9.5px;
+  font-style: normal;
+}
+
+.inspector-empty {
+  color: #93a29a;
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+
+/* ── 加载 / 错误 ────────────────────────────────────────── */
+.graph-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  color: #7d8c85;
+  font-size: 12px;
+}
+
+.graph-overlay > span {
+  color: #b4c2ba;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.graph-overlay strong {
+  color: #41524a;
+  font-size: 17px;
+}
+
+.graph-overlay p {
+  max-width: 460px;
+  line-height: 1.7;
+}
+
+.graph-overlay.empty {
+  pointer-events: none;
+}
+
+.graph-overlay.empty strong {
+  font-size: 16px;
+}
+
+.graph-overlay div {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.graph-error-detail {
+  max-width: 460px;
+  color: #b4c2ba;
+  font-size: 10px;
+  word-break: break-word;
+}
+
+/* ── 响应式 ─────────────────────────────────────────────── */
+@media (max-width: 1180px) {
+  .graph-toolbar-hint {
+    display: none;
+  }
+
+  .graph-search input {
+    width: 150px;
+  }
+
+  .graph-inspector {
+    width: 300px;
+  }
+}
+
+@media (max-width: 980px) {
+  .graph-page {
+    grid-template-rows: 58px minmax(0, 1fr);
+  }
+
+  .graph-title h1 {
+    font-size: 20px;
+  }
+
+  .graph-meta-chips .muted {
+    display: none;
+  }
+
+  .graph-canvas-hint {
+    display: none;
+  }
+
+  .graph-legend {
+    max-width: calc(100% - 24px);
+  }
+
+  .graph-inspector {
+    width: 288px;
+  }
+}
+
+@media (max-width: 720px) {
+  .graph-page {
+    grid-template-rows: 52px minmax(0, 1fr);
+    padding: 6px 10px 10px;
+    gap: 8px;
+  }
+
+  .graph-edge-label {
+    display: none;
+  }
+
+  .graph-heading {
+    gap: 10px;
+  }
+
+  .graph-back {
+    display: none;
+  }
+
+  .graph-title p {
+    display: none;
+  }
+
+  .graph-title h1 {
+    font-size: 18px;
+  }
+
+  .graph-meta-chips span:not(:first-child) {
+    display: none;
+  }
+
+  .graph-toolbar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .graph-layers button {
+    height: 26px;
+    padding: 0 9px;
+    font-size: 10px;
+  }
+
+  .graph-search {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .graph-search span {
+    display: none;
+  }
+
+  .graph-search input {
+    width: 100%;
+    height: 26px;
+    font-size: 10.5px;
+  }
+
+  .graph-zoom {
+    height: 26px;
+  }
+
+  .graph-zoom span {
+    display: none;
+  }
+
+  .graph-canvas-meta {
+    top: 8px;
+    left: 8px;
+    padding: 6px 9px;
+  }
+
+  .graph-canvas-meta strong {
+    font-size: 11px;
+  }
+
+  .graph-canvas-meta span {
+    display: none;
+  }
+
+  .graph-legend {
+    left: 8px;
+    bottom: 8px;
+    right: 8px;
+    max-width: none;
+    gap: 6px 10px;
+    padding: 6px 8px;
+    font-size: 9.5px;
+  }
+
+  .legend-group {
+    gap: 8px;
+  }
+
+  .graph-inspector {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    top: auto;
+    width: auto;
+    max-height: 52%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .graph-node,
+  .graph-edge {
+    transition: none;
+  }
+
+  .node-selection {
+    animation: none;
+  }
+}

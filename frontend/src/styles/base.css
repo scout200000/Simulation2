@@ -1,0 +1,57 @@
+:root {
+  --ink: #15211d;
+  --ink-soft: #33443d;
+  --muted: #6a7a73;
+  --faint: #93a19b;
+  --line: #e8ede9;
+  --line-strong: #d8e2db;
+  --green: #177f6f;
+  --green-deep: #0f5f53;
+  --green-soft: #eaf5f1;
+  --warm: #c0663f;
+  --danger: #b0544a;
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(21, 33, 29, .04), 0 16px 40px rgba(21, 33, 29, .05);
+  color: var(--ink);
+  background: #fff;
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  color: var(--ink);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: inherit; }
+button { font-family: inherit; }
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.16s ease;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-fade-enter-active,
+  .page-fade-leave-active {
+    transition: none;
+  }
+}

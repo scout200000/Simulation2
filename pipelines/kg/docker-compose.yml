@@ -1,0 +1,19 @@
+services:
+  neo4j:
+    image: neo4j:5.26-community
+    container_name: event-kg-neo4j
+    ports:
+      - "7474:7474"   # Neo4j Browser
+      - "7687:7687"   # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/eventkg123
+      - NEO4J_server_memory_heap_initial__size=512m
+      - NEO4J_server_memory_heap_max__size=1G
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+    volumes:
+      - neo4j_data:/data
+      - ./out:/import:ro
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:

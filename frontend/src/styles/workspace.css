@@ -1,0 +1,368 @@
+/* 工作台 · 与控制台一致的白底 + 绿色晕染 */
+
+* { box-sizing: border-box; }
+
+.workspace-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 26px;
+  color: var(--ink);
+  background:
+    radial-gradient(1100px 620px at 92% -14%, rgba(23, 127, 111, .12), transparent 62%),
+    radial-gradient(720px 480px at -8% 110%, rgba(23, 127, 111, .07), transparent 58%),
+    #fff;
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+.eyebrow {
+  display: block;
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+
+/* ── 顶栏 ───────────────────────────────────────────────── */
+.ws-header {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ws-brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; }
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: #fff;
+  background: linear-gradient(140deg, #1c937f, #0f6659);
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 7px 18px rgba(23, 127, 111, .22);
+}
+
+.brand-text strong,
+.brand-text small { display: block; line-height: 1.25; }
+.brand-text strong { font-size: 14px; }
+.brand-text small { color: var(--muted); font-size: 9.5px; }
+
+.ws-actions { display: flex; align-items: center; gap: 12px; }
+.ws-date { color: var(--faint); font-size: 10px; }
+.ws-link {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.ws-link:hover { color: var(--green-deep); }
+
+.ws-account {
+  max-width: 120px;
+  overflow: hidden;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .7);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.btn:hover { color: var(--green-deep); border-color: #bcd6cb; background: #f5fbf8; }
+
+/* ── 标题区 ─────────────────────────────────────────────── */
+.ws-intro {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 34px 28px 26px;
+}
+
+.ws-intro h1 {
+  margin: 12px 0 0;
+  font-size: clamp(30px, 3.4vw, 42px);
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+
+.ws-intro p {
+  margin: 12px 0 0;
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* ── 工作区卡片 ─────────────────────────────────────────── */
+.ws-grid {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 28px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.ws-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 372px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--ink);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(21, 33, 29, .03);
+  text-decoration: none;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.ws-card:hover {
+  border-color: #c2dbd1;
+  box-shadow: 0 20px 48px rgba(21, 33, 29, .08);
+  transform: translateY(-3px);
+}
+
+.ws-card.is-primary {
+  border-color: #cfe4db;
+  background:
+    radial-gradient(420px 220px at 108% -10%, rgba(23, 127, 111, .10), transparent 60%),
+    #fff;
+}
+
+.ws-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ws-card-eyebrow {
+  color: var(--green);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+
+.ws-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--green-deep);
+  background: var(--green-soft);
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.ws-visual {
+  position: relative;
+  height: 148px;
+  border: 1px solid #eef4f0;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(23, 127, 111, .10), transparent 65%),
+    #fbfdfc;
+  overflow: hidden;
+}
+
+.ws-visual svg { display: block; width: 100%; height: 100%; }
+.ws-visual line { stroke: #79b4a7; stroke-width: .9; opacity: .55; }
+.ws-visual circle { fill: #fff; stroke: #5a9e90; stroke-width: 2; }
+.ws-visual circle.hub { fill: var(--green); stroke: #fff; stroke-width: 2.5; }
+
+.ws-visual.is-graph svg { padding: 8px; }
+
+.ws-visual.is-bars { display: grid; align-items: end; padding: 18px 20px; }
+
+.ws-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 100%;
+}
+
+.ws-bars i {
+  flex: 1;
+  min-height: 8px;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, #4aa08f, #b8ded4);
+  opacity: .9;
+}
+
+.ws-card-copy h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.ws-card-copy p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.75;
+}
+
+.ws-card-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--faint);
+  font-size: 9.5px;
+}
+
+.ws-go { color: var(--green); font-weight: 800; }
+
+/* ── 页脚 ───────────────────────────────────────────────── */
+.ws-footer {
+  max-width: 1180px;
+  width: 100%;
+  margin: 28px auto 0;
+  padding: 18px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.ws-status { display: inline-flex; align-items: center; gap: 7px; }
+.ws-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2f9d78;
+  box-shadow: 0 0 0 4px rgba(47, 157, 120, .14);
+}
+
+/* ── 响应式 ─────────────────────────────────────────────── */
+@media (max-width: 1020px) {
+  .ws-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ws-date, .ws-link { display: none; }
+}
+
+@media (max-width: 700px) {
+  .ws-header { padding: 14px 16px; }
+  .brand-text small { display: none; }
+  .ws-account { display: none; }
+  .ws-intro { padding: 24px 16px 18px; }
+  .ws-grid { grid-template-columns: minmax(0, 1fr); padding: 0 16px; }
+  .ws-card { min-height: 0; }
+  .ws-footer { flex-direction: column; align-items: flex-start; gap: 6px; padding: 18px 16px 0; }
+}
+
+/* ── 最近会话 ───────────────────────────────────────────── */
+.ws-recent {
+  max-width: 1180px;
+  width: 100%;
+  margin: 22px auto 0;
+  padding: 0 28px;
+}
+
+.ws-recent > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px 8px;
+}
+
+.ws-recent > header a {
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ws-recent-list {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.ws-recent-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 11px 16px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background .14s ease;
+}
+
+.ws-recent-item + .ws-recent-item { border-top: 1px solid #f0f4f1; }
+.ws-recent-item:hover { background: #f8fcf9; }
+
+.ws-recent-id {
+  overflow: hidden;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-recent-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+
+.ws-recent-meta i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9aa8a1;
+}
+
+.ws-recent-meta i.success { background: #2f9d78; }
+.ws-recent-meta i.active { background: var(--green); box-shadow: 0 0 0 3px rgba(23, 127, 111, .12); }
+.ws-recent-meta i.warning { background: #c9963f; }
+.ws-recent-meta i.danger { background: #b0544a; }
+
+.ws-recent-go { color: var(--green); font-size: 9.5px; font-weight: 700; }
+
+@media (max-width: 700px) {
+  .ws-recent { padding: 0 16px; }
+  .ws-recent-item { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+  .ws-recent-meta { display: none; }
+}

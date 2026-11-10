@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "source": "generate",
+  "generate": {
+    "comment_count": 60
+  },
+  "harvest": {
+    "comment_count": 40,
+    "platforms": ["bilibili"],
+    "queries": [],
+    "max_keywords": 4,
+    "candidates": 24,
+    "videos": 3,
+    "hot_pages": 2,
+    "new_pages": 1,
+    "expand_ratio": 1.5,
+    "qps": 1.2,
+    "labeling": "compact",
+    "label_batch": 40
+  }
+}

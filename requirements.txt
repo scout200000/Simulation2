@@ -7,3 +7,4 @@ packaging==26.0
 pymongo==4.17.0
 requests==2.34.2
 urllib3==2.7.0
+reportlab==5.1.0

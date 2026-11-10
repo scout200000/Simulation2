@@ -1,4 +1,4 @@
-# Python运行缓存
+# Python 运行缓存
 __pycache__/
 *.py[cod]
 
@@ -11,3 +11,23 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+
+# 本地工具评审/构建工作区；不属于项目源码或实验数据。
+.codex_ppt_review/
+
+# 本地 MongoDB 数据目录与日志（由 backend/scripts/start_mongodb.py 创建）。
+.data/
+
+# 前端依赖与构建产物
+node_modules/
+dist/
+
+# 运行时产物（状态、实验批次、报告、图谱输出、历史日志）
+var/
+*.log
+
+# 第三方/参考工程内的依赖缓存
+third_party/**/node_modules/
+
+# 本机 Neo4j 凭据文件路径（不要提交个人绝对路径）
+configs/neo4j.json
